@@ -38,7 +38,7 @@ weather-ml-project/
 │   ├── utils/                    # Các hàm bổ trợ
 │   ├── visualization/            # Trực quan hóa dữ liệu
 │   └── config.py                 # Cấu hình toàn hệ thống
-├── tests/                        # Hệ thống test tự độnCg
+├── tests/                        # Hệ thống test tự động
 ├── run_pipeline.py               # Chạy quy trình tự động
 ├── setup.py                      # Thiết lập môi trường
 └── requirements.txt              # Danh sách thư viện phụ thuộc
