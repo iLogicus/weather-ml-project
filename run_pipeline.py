@@ -14,7 +14,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
 
 # Import các module từ thư mục src
 from data.load_data import load_raw_data, validate_data, print_data_info
-from data.sql_analysis import run_sql_eda  # <-- Import module SQL mới thêm
+from data.sql_analysis import run_sql_eda
 from features.feature_engineering import (
     create_all_features, calculate_lag_statistics,
     save_processed_data
@@ -67,7 +67,7 @@ def main(fetch_new_data=False, skip_training=False, skip_sql=False):
         lag_stats_path = os.path.join(MODELS_DIR, "lag_metadata.pkl")
         save_pickle(lag_stats, lag_stats_path)
         
-        print(f"\n\Hoàn thành Kỹ thuật Đặc trưng!")
+        print(f"\nHoàn thành Kỹ thuật Đặc trưng!")
         print(f"   Kích thước tập dữ liệu cuối cùng: {df_processed.shape}")
         
         # ================================================================

@@ -18,7 +18,7 @@ def run_sql_eda():
     Hàm này sẽ nạp dữ liệu từ CSV vào một cơ sở dữ liệu SQLite trong bộ nhớ (In-memory).
     """
     print("\n" + "="*80)
-    print(" BƯỚC 2.5: PHÂN TÍCH DỮ LIỆU BẰNG NGÔN NGỮ SQL (SQL EDA) ".center(80, "="))
+    print(" PHÂN TÍCH DỮ LIỆU BẰNG NGÔN NGỮ SQL (SQL EDA) ".center(80, "="))
     print("="*80)
 
     # 1. Kiểm tra sự tồn tại của file dữ liệu đã xử lý
@@ -41,69 +41,55 @@ def run_sql_eda():
 
         # --- TRUY VẤN 1: THỐNG KÊ TỔNG QUAN THEO TỪNG THÀNH PHỐ ---
         # Mục đích: Hiểu sự khác biệt về khí hậu giữa các vùng (Oceanic, Mediterranean, etc.)
-        print("\n[TRUY VẤN 1] THỐNG KÊ NHIỆT ĐỘ TRUNG BÌNH THEO TỪNG VÙNG KHÍ HẬU:")
+        print("\n[TRUY VẤN 1] THỐNG KÊ ĐẶC TRƯNG KHÍ HẬU THEO TỪNG VÙNG:")
         query1 = """
         SELECT 
-            City AS Thanh_Pho,
-            ROUND(AVG(TempMean), 2) AS Nhiet_Do_TB,
-            MAX(TempMax) AS Max_Nhiet_Do,
-            MIN(TempMin) AS Min_Nhiet_Do,
-            ROUND(AVG(Humidity), 1) AS Do_Am_TB
+            City,
+            ROUND(AVG(TempMean), 2) AS AvgTemp,
+            ROUND(MAX(TempMax), 2) AS RecordHigh,
+            ROUND(MIN(TempMin), 2) AS RecordLow,
+            ROUND(MAX(TempMean) - MIN(TempMean), 2) AS ThermalRange -- Thay cho Volatility
         FROM weather_stats
         GROUP BY City
-        ORDER BY Nhiet_Do_TB DESC;
+        ORDER BY AvgTemp DESC;
         """
         res1 = pd.read_sql_query(query1, conn)
         print(res1.to_string(index=False))
 
         # --- TRUY VẤN 2: PHÂN TÍCH XU HƯỚNG THEO THÁNG ---
         # Mục đích: Kiểm chứng tính mùa vụ (Seasonality) cho Feature Engineering
-        print("\n[TRUY VẤN 2] BIẾN THIÊN NHIỆT ĐỘ VÀ GIỜ CHIẾU SÁNG THEO THÁNG:")
+        print("\n[TRUY VẤN 2] THỐNG KÊ TẦN SUẤT CÁC NGÀY CỰC ĐOAN")
         query2 = """
         SELECT 
-            Month AS Thang,
-            ROUND(AVG(TempMax), 2) AS Max_TB,
-            ROUND(AVG(DaylightHours), 2) AS Gio_Chieu_Sang_TB,
-            ROUND(AVG(Precipitation), 2) AS Luong_Mua_TB
+            City,
+            SUM(CASE WHEN TempMax > 30 THEN 1 ELSE 0 END) AS HeatwaveDays,
+            SUM(CASE WHEN TempMin < 0 THEN 1 ELSE 0 END) AS FrostDays,
+            ROUND(SUM(CASE WHEN TempMax > 30 THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) AS HeatRatioPct
         FROM weather_stats
-        GROUP BY Month
-        ORDER BY Month ASC;
+        GROUP BY City
+        ORDER BY HeatwaveDays DESC;
         """
         res2 = pd.read_sql_query(query2, conn)
         print(res2.to_string(index=False))
 
         # --- TRUY VẤN 3: PHÁT HIỆN CÁC ĐIỂM DỮ LIỆU CỰC ĐOAN (ANOMALIES) ---
         # Mục đích: Tìm các ngày có thời tiết khắc nghiệt để kiểm tra độ bền của Model
-        print("\n[TRUY VẤN 3] DANH SÁCH CÁC NGÀY CÓ LƯỢNG MƯA VÀ GIÓ MẠNH ĐỘT BIẾN:")
+        print("\n[TRUY VẤN 3] KIỂM TRA TƯƠNG QUAN ĐỘ ẨM VÀ NHIỆT ĐỘ TỐI ĐA:")
         query3 = """
-        SELECT Date, City, Precipitation, WindSpeed
+        SELECT 
+            City,
+            CASE 
+                WHEN Humidity > 80 THEN 'High Humidity (>80%)'
+                WHEN Humidity < 40 THEN 'Low Humidity (<40%)'
+                ELSE 'Normal'
+            END AS HumidityRange,
+            ROUND(AVG(TempMax), 2) AS AvgMaxTemp
         FROM weather_stats
-        WHERE Precipitation > 45 OR WindSpeed > 60
-        ORDER BY Precipitation DESC
-        LIMIT 8;
+        GROUP BY City, HumidityRange
+        ORDER BY City, AvgMaxTemp DESC;
         """
         res3 = pd.read_sql_query(query3, conn)
-        if not res3.empty:
-            print(res3.to_string(index=False))
-        else:
-            print("   (Không tìm thấy ngày nào có điều kiện cực đoan vượt ngưỡng)")
-
-        # --- TRUY VẤN 4: KIỂM TRA TƯƠNG QUAN GIỮA GIỜ NẮNG VÀ NHIỆT ĐỘ ---
-        # Mục đích: Chứng minh đặc trưng DaylightHours (tính bằng toán học) có giá trị dự báo
-        print("\n[TRUY VẤN 4] KIỂM TRA MỐI QUAN HỆ GIỮA GIỜ CHIẾU SÁNG VÀ NHIỆT ĐỘ:")
-        query4 = """
-        SELECT 
-            CASE 
-                WHEN DaylightHours < 10 THEN 'Ngan (<10h)'
-                WHEN DaylightHours BETWEEN 10 AND 14 THEN 'Trung Binh (10-14h)'
-                ELSE 'Dai (>14h)'
-            END AS Nhom_Gio_Nang,
-            ROUND(AVG(TempMean), 2) AS Nhiet_Do_TB
-        FROM weather_stats
-        GROUP BY Nhom_Gio_Nang;
-        """
-        res4 = pd.read_sql_query(query4, conn)
-        print(res4.to_string(index=False))
+        print(res3.to_string(index=False))
 
         # Đóng kết nối
         conn.close()

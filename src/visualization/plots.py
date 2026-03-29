@@ -228,6 +228,30 @@ def plot_seasonal_patterns(df: pd.DataFrame, city: str, figsize=(10, 4)):
     return fig
 
 
+def plot_city_comparison_trend(df: pd.DataFrame, target: str = 'TempMax', figsize=(12, 5)):
+    """
+    Vẽ xu hướng nhiệt độ của tất cả thành phố trên cùng một biểu đồ 
+    để thấy sự phân hóa (Evidence cho ANOVA).
+    """
+    setup_dark_theme()
+    fig, ax = plt.subplots(figsize=figsize)
+    
+    # Tính trung bình theo tháng cho mỗi thành phố
+    for city in sorted(df['City'].unique()):
+        city_monthly = df[df['City'] == city].groupby('Month')[target].mean()
+        ax.plot(city_monthly.index, city_monthly.values, 
+                marker='o', label=city, linewidth=2, alpha=0.8)
+    
+    ax.set_title(f'So sánh xu hướng {target} giữa các thành phố', fontsize=13)
+    ax.set_xticks(range(1, 13))
+    ax.set_xlabel('Tháng')
+    ax.set_ylabel('Nhiệt độ (°C)')
+    ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    ax.grid(True, alpha=0.2)
+    
+    plt.tight_layout()
+    return fig
+
 def plot_model_comparison(metrics: dict, target: str, figsize=(10, 4)):
     """
     Vẽ biểu đồ so sánh các models.

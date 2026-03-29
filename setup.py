@@ -156,8 +156,6 @@ TÀI LIỆU THAM KHẢO:
 HỖ TRỢ KỸ THUẬT:
    - Đảm bảo bạn đang đứng tại thư mục gốc của dự án khi chạy lệnh
    - Kiểm tra kết nối Internet nếu cần tải dữ liệu từ API
-
-Chúc bạn thực hiện dự án thành công!
     """)
 
 

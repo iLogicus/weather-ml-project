@@ -206,7 +206,7 @@ def train_all_models(df: pd.DataFrame) -> dict:
     dict
         Dictionary chứa results của tất cả targets × models
     """
-    print_section_header("TRAINING ALL MODELS")
+    print_section_header("TRAINING TẤT CẢ MODELS")
     
     all_results = {}
     
@@ -214,9 +214,7 @@ def train_all_models(df: pd.DataFrame) -> dict:
         results = train_all_models_for_target(df, target)
         all_results[target] = results
     
-    print("\n" + "="*70)
-    print("HOÀN THÀNH TRAINING TẤT CẢ MODELS")
-    print("="*70)
+    print_section_header("HOÀN THÀNH TRAINING TẤT CẢ MODELS")
     
     return all_results
 
@@ -232,7 +230,7 @@ def save_all_models(all_results: dict, models_dir: str = MODELS_DIR) -> None:
     models_dir : str
         Thư mục lưu models
     """
-    print_section_header("SAVING MODELS")
+    print_section_header("LƯU TẤT CẢ MODELS")
     
     os.makedirs(models_dir, exist_ok=True)
     
